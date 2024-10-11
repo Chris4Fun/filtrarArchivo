@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 import os
 import re
 from datetime import datetime
@@ -11,30 +9,33 @@ def analyzer():
     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
     nombre_archivo = f"DMS_PROD_{timestamp}.txt"
 
-    # Regex used to match all of the comments
-    pattern = re.compile(r'^%%%%%TRAILER: (\w+)')
-    trdPattern = re.compile(r'\s*,EXTENDED = TRUE')
+    # Regex patterns to match the lines
+    event_pattern = re.compile(r'EVENT CATEGORY:\s*(.*)')  # Added capturing group
+    locker_pattern = re.compile(r'.*LOCKER')
+    date_pattern = re.compile(r'(DATE.*)')
 
-    match = None 
-    strMatch = None
-    
-    # Opening file
+    event_match = None
+    date_match = None
+
     with open(nombre_archivo, "w") as outputFile:
-        with open('datos/DMS.TXT', "r") as inputFile:
+        with open('datos/arch1_08.txt', "r") as inputFile:
             line = inputFile.readline()
             while line:
-                if pattern.match(line):
-                    match = pattern.match(line)
-                    strMatch = match.group(1)
-                trdMatch = trdPattern.match(line)
+                # Capture EVENT CATEGORY
+                event_result = event_pattern.match(line)
+                if event_result:
+                    event_match = event_result.group(1)
+                
+                # Capture DATE
+                date_result = date_pattern.match(line)
+                if date_result:
+                    date_match = date_result.group(1)
 
-                if trdMatch:
-                        outputFile.write(strMatch + " EXTENDED" + '\n')
+                # If LOCKER is found, write the saved EVENT CATEGORY and DATE
+                if locker_pattern.match(line) and event_match and date_match:
+                    outputFile.write(f"{event_match} {date_match} {line}")
                     
                 line = inputFile.readline()
 
-
-
 if __name__ == "__main__":
     main()
-    
